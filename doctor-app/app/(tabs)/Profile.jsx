@@ -1,4 +1,4 @@
-import { FontAwesome5, Ionicons } from "@expo/vector-icons";
+import { FontAwesome5 } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
@@ -14,7 +14,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 export default function Profile() {
   const router = useRouter();
   const [userName, setUserName] = useState("Jane Smith");
-  const [userRole, setUserRole] = useState("Patient");
+  const [userRole, setUserRole] = useState("Doctor");
   const [email, setEmail] = useState("jane.smith@example.com");
 
   const handleUpdate = () => {
@@ -38,22 +38,22 @@ export default function Profile() {
     console.log("Logout requested.");
   };
 
-  const back = () => {
-    //router.push("/(tabs)/Dashboard");
-  };
+  // const back = () => {
+  //   //router.push("/(tabs)/Dashboard");
+  // };
 
   return (
     <SafeAreaView className="flex-1 bg-black">
       <ScrollView className="flex-1 p-5 pb-24">
         {/* Header with Back Button */}
         <View className="flex-row items-center justify-between mb-6">
-          <TouchableOpacity onPress={back}>
+          {/* <TouchableOpacity onPress={back}>
             <Ionicons
               name="arrow-back-circle-outline"
               size={32}
               color="white"
             />
-          </TouchableOpacity>
+          </TouchableOpacity> */}
           <View className="flex-1 ml-4">
             <Text className="text-white text-3xl font-bold">User Profile</Text>
             <Text className="text-gray-400 mt-1">
