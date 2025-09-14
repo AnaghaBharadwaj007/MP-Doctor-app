@@ -18,13 +18,14 @@ type IconSymbolName = keyof typeof MAPPING;
  */
 const MAPPING = {
   "house.fill": "home",
-  "paperplane.fill": "send",
   "chevron.left.forwardslash.chevron.right": "code",
   "chevron.right": "chevron-right",
-  "cpu.fill": "memory", // MaterialIcon alternative
+  "cpu.fill": "memory",
   "cross.case.fill": "medical-services",
   "clock.arrow.circlepath": "history",
-} as IconMapping;
+  "person-add": "person-add", // ✅ works
+  "person-circle": "account-circle", // ✅ better match in MaterialIcons
+} as Record<string, string>;
 
 /**
  * An icon component that uses native SF Symbols on iOS, and Material Icons on Android and web.
@@ -47,7 +48,9 @@ export function IconSymbol({
     <MaterialIcons
       color={color}
       size={size}
-      name={MAPPING[name]}
+      name={
+        (MAPPING[name] as keyof typeof MaterialIcons.glyphMap) || "help-outline"
+      }
       style={style}
     />
   );

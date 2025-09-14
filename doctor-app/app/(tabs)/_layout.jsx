@@ -1,21 +1,29 @@
+import { IconSymbol } from "@/components/ui/icon-symbol";
+import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 import React from "react";
 
-import { HapticTab } from "@/components/haptic-tab";
-import { IconSymbol } from "@/components/ui/icon-symbol";
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import "../../global.css";
-
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
-
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? "light"].tint,
+        tabBarShowLabel: false,
         headerShown: false,
-        tabBarButton: HapticTab,
+        tabBarStyle: {
+          backgroundColor: "#101013",
+          borderTopLeftRadius: 24,
+          borderTopRightRadius: 24,
+          height: 55,
+          // position removed to keep tabbar at bottom by default
+          // position: "absolute",
+          shadowColor: "#00ff90",
+          shadowOffset: { width: 0, height: -2 },
+          shadowOpacity: 0.3,
+          shadowRadius: 8,
+          elevation: 15,
+        },
+        tabBarActiveTintColor: "#0FFF73",
+        tabBarInactiveTintColor: "#51565c",
       }}
     >
       <Tabs.Screen
@@ -32,7 +40,7 @@ export default function TabLayout() {
         options={{
           title: "Assign",
           tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="cpu.fill" color={color} />
+            <Ionicons name="person-add" size={28} color={color} />
           ),
         }}
       />
@@ -41,7 +49,7 @@ export default function TabLayout() {
         options={{
           title: "Profile",
           tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="cross.case.fill" color={color} />
+            <Ionicons name="person-circle" size={28} color={color} />
           ),
         }}
       />
