@@ -4,14 +4,18 @@ import { useState } from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+// Import your two prebuilt components
+import GaitAnalysisCircle from "./GaitAnalysisCircle";
+import TremorFrequencyCircle from "./TremorFrequencyCircle";
+
 export default function PatientProfile() {
   const router = useRouter();
 
   // Placeholder patient data
   const [patientName, setPatientName] = useState("Alice Johnson");
   const [patientAge, setPatientAge] = useState(68);
-  const [tremorFrequency, setTremorFrequency] = useState("6.2 Hz");
-  const [gaitAnalysis, setGaitAnalysis] = useState("85%");
+  const [tremorFrequency, setTremorFrequency] = useState(6.2); // Number, not string
+  const [gaitAnalysis, setGaitAnalysis] = useState(85); // Number, not string
 
   const handlePrescribeMedicine = () => {
     // Placeholder for navigation to the medication page
@@ -45,14 +49,10 @@ export default function PatientProfile() {
           </View>
         </View>
 
-        {/* Digital Twin Placeholder */}
-        <View className="mt-6 flex items-center justify-center">
-          <View
-            style={{ height: 250, width: 250 }}
-            className="bg-gray-800 rounded-full flex items-center justify-center border border-green-500"
-          >
-            <Text className="text-white text-lg">Digital Twin</Text>
-          </View>
+        {/* Animated Circles for Tremor and Gait */}
+        <View className="mt-6 flex-row items-center justify-center space-x-8">
+          <TremorFrequencyCircle value={tremorFrequency} threshold={7} />
+          <GaitAnalysisCircle value={gaitAnalysis} threshold={80} />
         </View>
 
         {/* Monitoring Status */}
@@ -61,7 +61,7 @@ export default function PatientProfile() {
           <View className="mt-4 flex-row justify-between">
             <View className="p-4 bg-gray-800 rounded-lg w-[48%] items-center">
               <Text className="text-green-500 font-bold text-3xl">
-                {tremorFrequency}
+                {tremorFrequency} Hz
               </Text>
               <Text className="text-gray-400 mt-2 text-sm">
                 Tremor Frequency
@@ -69,7 +69,7 @@ export default function PatientProfile() {
             </View>
             <View className="p-4 bg-gray-800 rounded-lg w-[48%] items-center">
               <Text className="text-green-500 font-bold text-3xl">
-                {gaitAnalysis}
+                {gaitAnalysis}%
               </Text>
               <Text className="text-gray-400 mt-2 text-sm">Gait Analysis</Text>
             </View>
