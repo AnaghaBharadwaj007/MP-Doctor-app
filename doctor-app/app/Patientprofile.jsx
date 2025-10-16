@@ -1,34 +1,56 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import { useState } from "react";
-import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { useEffect, useState } from "react";
+import { Alert, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-// Import your two prebuilt components
 import GaitAnalysisCircle from "./GaitAnalysisCircle";
 import TremorFrequencyCircle from "./TremorFrequencyCircle";
 
 export default function PatientProfile() {
+  const { id: patientId } = useLocalSearchParams();
   const router = useRouter();
 
-  // Placeholder patient data
-  const [patientName, setPatientName] = useState("Alice Johnson");
-  const [patientAge, setPatientAge] = useState(68);
-  const [tremorFrequency, setTremorFrequency] = useState(6.2); // Number, not string
-  const [gaitAnalysis, setGaitAnalysis] = useState(85); // Number, not string
+  const [patientName, setPatientName] = useState("");
+  const [patientAge, setPatientAge] = useState(0);
+  const [tremorFrequency, setTremorFrequency] = useState(0);
+  const [gaitAnalysis, setGaitAnalysis] = useState(0);
+
+  useEffect(() => {
+    async function fetchPatientDetails() {
+      try {
+        if (!patientId) throw new Error("No patient ID provided");
+        const response = await fetch(
+          `https://heimdall-server.servehttp.com:8443/patient/${patientId}`
+        );
+        if (!response.ok) throw new Error("Failed to fetch patient details");
+        const data = await response.json();
+
+        setPatientName(data.name || "Unknown");
+        if (data.dateOfBirth) {
+          const birthYear = new Date(data.dateOfBirth).getFullYear();
+          const currentYear = new Date().getFullYear();
+          setPatientAge(currentYear - birthYear);
+        } else {
+          setPatientAge(0);
+        }
+
+        // Using placeholders for these metrics
+        setTremorFrequency(6.2);
+        setGaitAnalysis(85);
+      } catch (err) {
+        Alert.alert("Error", err.message);
+      }
+    }
+    fetchPatientDetails();
+  }, [patientId]);
 
   const handlePrescribeMedicine = () => {
-    // Placeholder for navigation to the medication page
-    //Alert.alert("Prescribe Medicine", "Navigating to medication page.");
-    // router.push(`/medication/${patientId}`);
-    router.push("/Medication");
+    router.push(`/Medication?patientId=${patientId}`);
   };
 
   const handleMoreDetails = () => {
-    // Placeholder for navigation to the patient's history page
-    //Alert.alert("More Details", "Navigating to patient's history.");
-    // router.push(`/history/${patientId}`);
-    router.push("/History");
+    router.push(`/History?patientId=${patientId}`);
   };
 
   return (

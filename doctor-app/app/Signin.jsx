@@ -1,7 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import * as SecureStore from "expo-secure-store";
 import { useState } from "react";
-import { Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Alert, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function LoginScreen() {
@@ -13,21 +14,44 @@ export default function LoginScreen() {
     router.push("/Signup");
   };
 
-  const handleSignIn = () => {
-    // This function will handle the sign-in logic later.
-    console.log("Sign In button pressed.");
-    console.log("Email:", email);
-    console.log("Password:", password);
-    router.push("/(tabs)/Dashboard");
+  const handleSignIn = async () => {
+    try {
+      const response = await fetch(
+        "https://heimdall-server.servehttp.com:8443/doctor/auth/login",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email,
+            password,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Invalid credentials");
+      }
+
+      const data = await response.json();
+
+      // Store JWT token from response
+      if (data.token) {
+        await SecureStore.setItemAsync("doctor_jwt", data.token);
+      }
+
+      router.push("/(tabs)/Dashboard");
+    } catch (error) {
+      Alert.alert("Login Failed", "Wrong Credentials: " + error.message);
+    }
   };
 
   const handleGoogleSignIn = () => {
-    // This function will handle "Continue with Google" logic.
     console.log("Google Sign In button pressed.");
   };
 
   const handleForgotPassword = () => {
-    // This function will handle the "Forgot Password" logic.
     console.log("Forgot Password link pressed.");
   };
 

@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import * as SecureStore from "expo-secure-store";
+import { useEffect, useState } from "react";
 import {
   Alert,
   ScrollView,
@@ -11,53 +12,109 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const initialPatients = [
-  { id: "1", name: "Alice Johnson" },
-  { id: "2", name: "Bob Williams" },
-  { id: "3", name: "Charlie Brown" },
-  { id: "4", name: "David Miller" },
-  { id: "5", name: "Eve Davis" },
-  { id: "6", name: "Alice Johnson" },
-];
+// Helper: decode JWT and extract payload
+function parseJwt(token) {
+  try {
+    const base64Url = token.split(".")[1];
+    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split("")
+        .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+        .join("")
+    );
+    return JSON.parse(jsonPayload);
+  } catch {
+    return null;
+  }
+}
 
 export default function Dashboard() {
   const router = useRouter();
-  const [patients, setPatients] = useState(
-    initialPatients.sort((a, b) => a.name.localeCompare(b.name))
-  );
+  const [patients, setPatients] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
 
+  // Fetch patients associated with doctor on mount
+  useEffect(() => {
+    async function fetchPatients() {
+      try {
+        const token = await SecureStore.getItemAsync("doctor_jwt");
+        if (!token) throw new Error("User not authenticated");
+        const payload = parseJwt(token);
+        if (!payload || !payload.sub) throw new Error("Invalid token");
+        const doctorId = payload.sub;
+
+        const response = await fetch(
+          `https://heimdall-server.servehttp.com:8443/doctor/${doctorId}/patients`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        if (!response.ok) throw new Error("Failed to fetch patients");
+        const patientsData = await response.json();
+        setPatients(patientsData.sort((a, b) => a.name.localeCompare(b.name)));
+      } catch (error) {
+        Alert.alert("Error", error.message);
+      }
+    }
+    fetchPatients();
+  }, []);
+
   const filteredPatients = patients.filter((patient) =>
-    patient.name.toLowerCase().includes(searchQuery.toLowerCase())
+    patient.name?.toLowerCase()?.includes(searchQuery.toLowerCase())
   );
 
+  // Navigate to patient details page passing selected patient ID
   const handlePatientPress = (patientId) => {
-    // This is where you would handle navigation to the patient's profile page
-    // router.push(`/patient-profile/${patientId}`);
-    //Alert.alert("Patient Profile", `Navigating to ${patientId}'s profile.`);
+    // router.push(`/Patientprofile/${patientId}`);
     router.push("/Patientprofile");
+    // On next page, extract patientId from route parameters to fetch & render
   };
 
-  const handleRemovePatient = (patientId, patientName) => {
-    Alert.alert(
-      "Remove Patient",
-      `Are you sure you want to remove ${patientName}?`,
-      [
-        {
-          text: "Cancel",
-          style: "cancel",
-        },
-        {
-          text: "Yes, Remove",
-          onPress: () => {
-            console.log(`Patient ${patientId} removed.`);
-            // Implement logic to remove the patient from the list
-            setPatients(patients.filter((p) => p.id !== patientId));
-            Alert.alert("Success", `${patientName} has been removed.`);
+  // Remove patient from doctor’s list via DELETE API
+  const handleRemovePatient = async (patientId, patientName) => {
+    try {
+      const token = await SecureStore.getItemAsync("doctor_jwt");
+      if (!token) throw new Error("User not authenticated");
+      const payload = parseJwt(token);
+      if (!payload || !payload.sub) throw new Error("Invalid token");
+      const doctorId = payload.sub;
+
+      Alert.alert(
+        "Remove Patient",
+        `Are you sure you want to remove ${patientName}?`,
+        [
+          { text: "Cancel", style: "cancel" },
+          {
+            text: "Yes, Remove",
+            onPress: async () => {
+              const response = await fetch(
+                `https://heimdall-server.servehttp.com:8443/doctor/${doctorId}/remove-patient/${patientId}`,
+                {
+                  method: "DELETE",
+                  headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                  },
+                }
+              );
+              if (!response.ok) throw new Error("Failed to remove patient");
+              setPatients((prev) =>
+                prev.filter((p) => String(p.id) !== String(patientId))
+              );
+              Alert.alert("Success", `${patientName} has been removed.`);
+            },
           },
-        },
-      ]
-    );
+        ]
+      );
+    } catch (error) {
+      Alert.alert("Error", error.message);
+    }
   };
 
   return (
@@ -65,9 +122,6 @@ export default function Dashboard() {
       <ScrollView className="flex-1 p-5 pb-24">
         <View className="flex-row items-center justify-between mb-6">
           <Text className="text-white text-3xl font-bold">Patient List</Text>
-          {/* <TouchableOpacity className="p-3 bg-gray-800 rounded-full">
-            <FontAwesome5 name="user-circle" size={24} color="white" />
-          </TouchableOpacity> */}
         </View>
 
         <TextInput
@@ -82,7 +136,7 @@ export default function Dashboard() {
           {filteredPatients.length > 0 ? (
             filteredPatients.map((patient) => (
               <TouchableOpacity
-                key={patient.id}
+                key={patient.id ? String(patient.id) : Math.random().toString()} // Ensure string type and fallback
                 className="bg-gray-800 p-4 rounded-lg flex-row items-center justify-between mb-4"
                 onPress={() => handlePatientPress(patient.id)}
                 onLongPress={() =>

@@ -1,6 +1,7 @@
 import { FontAwesome5 } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import * as SecureStore from "expo-secure-store";
+import { useEffect, useState } from "react";
 import {
   Alert,
   ScrollView,
@@ -11,49 +12,105 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+// Decode JWT helper
+function parseJwt(token) {
+  try {
+    const base64Url = token.split(".")[1];
+    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split("")
+        .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+        .join("")
+    );
+    return JSON.parse(jsonPayload);
+  } catch {
+    return null;
+  }
+}
+
 export default function Profile() {
   const router = useRouter();
-  const [userName, setUserName] = useState("Jane Smith");
-  const [userRole, setUserRole] = useState("Doctor");
-  const [email, setEmail] = useState("jane.smith@example.com");
 
-  const handleUpdate = () => {
-    // Placeholder function to handle profile update logic
-    Alert.alert("Profile Updated", "Your information has been saved.");
-    console.log("Profile update requested.");
+  const [userName, setUserName] = useState("Loading...");
+  const [email, setEmail] = useState("Loading...");
+  const [userRole, setUserRole] = useState("Doctor");
+
+  // On component mount load name and email from decoded JWT or backend
+  useEffect(() => {
+    async function loadUserData() {
+      try {
+        const token = await SecureStore.getItemAsync("doctor_jwt");
+        if (!token) throw new Error("User not authenticated");
+        const payload = parseJwt(token);
+        if (!payload) throw new Error("Invalid token");
+
+        // Optionally, you could fetch latest data from backend here
+
+        setUserName(payload.name || "Doctor");
+        setEmail(payload.email || "parkinsons@gmail.com");
+      } catch (err) {
+        Alert.alert("Error", err.message);
+      }
+    }
+    loadUserData();
+  }, []);
+
+  const handleUpdate = async () => {
+    try {
+      const token = await SecureStore.getItemAsync("doctor_jwt");
+      if (!token) throw new Error("User not authenticated");
+      const payload = parseJwt(token);
+      if (!payload || !payload.sub) throw new Error("Invalid token");
+      const doctorId = payload.sub;
+
+      // Send only allowed fields to update: name and email
+      const body = {
+        name: userName,
+        phone: "", // Empty or keep as is (not changing)
+        specialization: "", // Empty or keep as is (not changing)
+      };
+
+      // Make PUT request
+      const response = await fetch(
+        `https://heimdall-server.servehttp.com:8443/doctor/${doctorId}`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(body),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to update profile");
+      }
+
+      Alert.alert("Profile Updated", "Your information has been saved.");
+    } catch (error) {
+      Alert.alert("Error", error.message);
+    }
   };
 
   const handleChangePassword = () => {
-    // Placeholder function for password change
     Alert.alert(
       "Password Change",
       "You will be redirected to the password change screen."
     );
-    console.log("Change password requested.");
   };
 
   const handleLogout = () => {
-    // Placeholder function for logout logic
     Alert.alert("Logged Out", "You have successfully logged out.");
-    console.log("Logout requested.");
   };
-
-  // const back = () => {
-  //   //router.push("/(tabs)/Dashboard");
-  // };
 
   return (
     <SafeAreaView className="flex-1 bg-black">
       <ScrollView className="flex-1 p-5 pb-24">
         {/* Header with Back Button */}
         <View className="flex-row items-center justify-between mb-6">
-          {/* <TouchableOpacity onPress={back}>
-            <Ionicons
-              name="arrow-back-circle-outline"
-              size={32}
-              color="white"
-            />
-          </TouchableOpacity> */}
+          {/* Back button can be uncommented later */}
           <View className="flex-1 ml-4">
             <Text className="text-white text-3xl font-bold">User Profile</Text>
             <Text className="text-gray-400 mt-1">
@@ -86,9 +143,10 @@ export default function Profile() {
           <TextInput
             className="bg-gray-700 text-white rounded-md p-3 mb-4"
             value={email}
-            onChangeText={setEmail}
             keyboardType="email-address"
+            editable={false} // Make email field non-editable if you want, else remove
           />
+
           <TouchableOpacity
             className="p-4 bg-green-500 rounded-full"
             onPress={handleUpdate}
