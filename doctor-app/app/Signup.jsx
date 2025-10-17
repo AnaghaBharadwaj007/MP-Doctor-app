@@ -13,22 +13,19 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function DoctorSignupScreen() {
   const router = useRouter();
-
-  // Update state fields as per API requirements
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [specialization, setSpecialization] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSignUp = async () => {
     try {
-      // Basic validation (optional, add more later)
       if (!name || !email || !phone || !specialization || !password) {
         Alert.alert("Error", "Please fill all fields");
         return;
       }
-
       const response = await fetch(
         "https://heimdall-server.servehttp.com:8443/doctor/auth/signup",
         {
@@ -45,14 +42,12 @@ export default function DoctorSignupScreen() {
           }),
         }
       );
-
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || "Signup failed");
       }
-
       Alert.alert("Success", "Account created successfully");
-      router.push("/(tabs)/Dashboard"); // Redirect to doctor's dashboard
+      router.push("/(tabs)/Dashboard");
     } catch (error) {
       Alert.alert("Signup Failed", error.message);
     }
@@ -112,14 +107,24 @@ export default function DoctorSignupScreen() {
               onChangeText={setSpecialization}
             />
 
-            <TextInput
-              className="w-full px-4 py-3 bg-[#181B1F] rounded-lg text-white mb-4"
-              placeholder="Password"
-              placeholderTextColor="#656ca9"
-              secureTextEntry
-              value={password}
-              onChangeText={setPassword}
-            />
+            <View className="w-full flex-row items-center bg-[#181B1F] rounded-lg mb-4">
+              <TextInput
+                style={{ flex: 1, color: "white", padding: 12 }}
+                placeholder="Password"
+                placeholderTextColor="#656ca9"
+                secureTextEntry={!showPassword}
+                value={password}
+                onChangeText={setPassword}
+              />
+              <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                <Ionicons
+                  name={showPassword ? "eye" : "eye-off"}
+                  size={24}
+                  color="#656ca9"
+                  style={{ marginRight: 12 }}
+                />
+              </TouchableOpacity>
+            </View>
 
             <TouchableOpacity
               className="w-full px-4 py-4 bg-green-500 rounded-full mt-8 shadow-lg shadow-green-400"
@@ -135,7 +140,6 @@ export default function DoctorSignupScreen() {
               <Text className="text-gray-400 px-4">OR</Text>
               <View className="flex-1 h-[1px] bg-gray-600" />
             </View>
-
             <TouchableOpacity
               className="flex-row items-center justify-center p-3 rounded-full border border-gray-600"
               onPress={handleGoogleSignUp}
@@ -144,7 +148,6 @@ export default function DoctorSignupScreen() {
               <Text className="text-white ml-2">Continue with Google</Text>
             </TouchableOpacity>
           </View>
-
           <View className="flex-row justify-center mb-8">
             <Text className="text-gray-400">Already have an account? </Text>
             <TouchableOpacity onPress={goToSignin}>

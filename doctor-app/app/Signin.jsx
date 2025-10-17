@@ -8,6 +8,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
 
   const gotoSignup = () => {
@@ -29,18 +30,13 @@ export default function LoginScreen() {
           }),
         }
       );
-
       if (!response.ok) {
         throw new Error("Invalid credentials");
       }
-
       const data = await response.json();
-
-      // Store JWT token from response
       if (data.token) {
         await SecureStore.setItemAsync("doctor_jwt", data.token);
       }
-
       router.push("/(tabs)/Dashboard");
     } catch (error) {
       Alert.alert("Login Failed", "Wrong Credentials: " + error.message);
@@ -72,14 +68,24 @@ export default function LoginScreen() {
             value={email}
             onChangeText={setEmail}
           />
-          <TextInput
-            className="w-full px-4 py-3 bg-[#181B1F] rounded-lg text-white mb-2"
-            placeholder="Password"
-            placeholderTextColor="#656ca9"
-            secureTextEntry
-            value={password}
-            onChangeText={setPassword}
-          />
+          <View className="w-full flex-row items-center bg-[#181B1F] rounded-lg mb-2">
+            <TextInput
+              style={{ flex: 1, color: "white", padding: 12 }}
+              placeholder="Password"
+              placeholderTextColor="#656ca9"
+              secureTextEntry={!showPassword}
+              value={password}
+              onChangeText={setPassword}
+            />
+            <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+              <Ionicons
+                name={showPassword ? "eye" : "eye-off"}
+                size={24}
+                color="#656ca9"
+                style={{ marginRight: 12 }}
+              />
+            </TouchableOpacity>
+          </View>
           <TouchableOpacity onPress={handleForgotPassword}>
             <Text className="text-right text-gray-500 font-semibold text-sm">
               Forgot Password?

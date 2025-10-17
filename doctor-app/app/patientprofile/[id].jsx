@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import { Alert, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import GaitAnalysisCircle from "./GaitAnalysisCircle";
-import TremorFrequencyCircle from "./TremorFrequencyCircle";
+import GaitAnalysisCircle from "../GaitAnalysisCircle";
+import TremorFrequencyCircle from "../TremorFrequencyCircle";
 
 export default function PatientProfile() {
   const { id: patientId } = useLocalSearchParams();
@@ -45,12 +45,12 @@ export default function PatientProfile() {
     fetchPatientDetails();
   }, [patientId]);
 
-  const handlePrescribeMedicine = () => {
-    router.push(`/Medication?patientId=${patientId}`);
+  const handleMoreDetails = () => {
+    router.push(`/History/${patientId}`);
   };
 
-  const handleMoreDetails = () => {
-    router.push(`/History?patientId=${patientId}`);
+  const handlePrescribeMedicine = () => {
+    router.push(`/Medication/${patientId}`);
   };
 
   return (

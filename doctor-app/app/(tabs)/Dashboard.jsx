@@ -71,9 +71,13 @@ export default function Dashboard() {
 
   // Navigate to patient details page passing selected patient ID
   const handlePatientPress = (patientId) => {
-    // router.push(`/Patientprofile/${patientId}`);
-    router.push("/Patientprofile");
+    router.push(`/patientprofile/${patientId}`);
+    // router.push("/Patientprofile");
     // On next page, extract patientId from route parameters to fetch & render
+    // router.push({
+    //   pathname: "/patientprofile/[id]",
+    //   params: { id: patientId },
+    // });
   };
 
   // Remove patient from doctor’s list via DELETE API
